@@ -136,6 +136,10 @@ input {
 
 .game__inner-right {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
 }
 
 .game__inner-right::before {
