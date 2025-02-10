@@ -1,6 +1,14 @@
 const canvas = document.getElementById('canvas-snake');
 const context = canvas.getContext('2d');
-let raf;
+
+const scoreBlock = document.getElementById('score');
+const speedBlock = document.getElementById('speed');
+
+const startBtn = document.getElementById('start');
+const resetBtn = document.getElementById('reset');
+const pauseBtn = document.getElementById('pause');
+
+const decorBlock = document.querySelector('.game__inner-right');
 
 const config = {
     snakeLength: 5,
@@ -10,7 +18,7 @@ const config = {
     backgroundColor: '#fffae6',
     gridColor: '#262626',
     initialDirection: 'right',
-    frameDelay: 20 // Змейка будет двигаться каждые N кадров
+    frameDelay: 25, // Змейка будет двигаться каждые N кадров
 };
 
 const state = {
@@ -19,8 +27,11 @@ const state = {
     direction: config.initialDirection,
     directionQueue: config.initialDirection,
     score: 0,
+    speed: 1,
     foodX: [],
-    foodY: []
+    foodY: [],
+    isPaused: false,
+    isGameRunning: false
 };
 
 let frameCount = 0; // Счётчик кадров
@@ -32,9 +43,11 @@ for (let i = 0; i <= canvas.width - config.cellSize; i += config.cellSize) {
 }
 
 // Делаем canvas фокусируемым
-canvas.setAttribute('tabindex', 1);
-canvas.style.outline = 'none';
-canvas.focus();
+function focusedCanvas() {
+    canvas.setAttribute('tabindex', 1);
+    canvas.style.outline = 'none';
+    canvas.focus();
+}
 
 // Отрисовка фона и сетки
 function drawBackground() {
@@ -134,6 +147,7 @@ function moveSnake() {
     } else {
         createFood();
         state.score += 10;
+        scoreBlock.innerText = state.score;
     }
 }
 
@@ -155,17 +169,24 @@ function resetGame() {
     state.direction = config.initialDirection;
     state.directionQueue = config.initialDirection;
     state.score = 0;
-    frameCount = 0; // Сбрасываем счётчик кадров
+    scoreBlock.innerText = state.score;
+    frameCount = 0;
+    state.isPaused = false;
+    pauseBtn.textContent = 'Пауза';
+    state.isGameRunning = false;
+    speed = 1;
 }
 
 // Основной игровой цикл
 function game() {
     frameCount++;
+    if (!state.isPaused) {
 
-    // Обновляем позицию змейки только каждые config.frameDelay кадров
-    if (frameCount % config.frameDelay === 0) {
-        checkGameOver();
-        moveSnake();
+        if (frameCount % config.frameDelay === 0) {
+            checkGameOver();
+            moveSnake();
+        }
+
     }
 
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -173,23 +194,50 @@ function game() {
     drawSnake();
     drawFood();
 
-    raf = window.requestAnimationFrame(game);
+    window.requestAnimationFrame(game);
 }
 
 // Инициализация игры
 function init() {
+    if (state.isGameRunning) {
+        return;
+    }
+
     canvas.addEventListener('keydown', (evt) => {
         evt.preventDefault();
         changeDirection(evt.code);
     });
 
+    pauseBtn.addEventListener('click', () => {
+        state.isPaused = !state.isPaused;
+        pauseBtn.textContent = state.isPaused ? 'Продолжить' : 'Пауза';
+        focusedCanvas();
+    });
+
+    state.speed = speedBlock.value;
+    config.frameDelay = Math.floor(25 / Number(state.speed));
+
+    speedBlock.addEventListener('input', function () {
+        state.speed = speedBlock.value;
+        config.frameDelay = Math.floor(25 / Number(state.speed));
+        focusedCanvas();
+    });
+
     resetGame();
     drawBackground();
     game();
+    scoreBlock.innerText = state.score;
+
+    state.isGameRunning = true;
 }
 
-init();
+startBtn.addEventListener('click', function () {
+    init();
+    focusedCanvas();
+    decorBlock.classList.add('game__inner-right_active');
+})
 
-// canvas.addEventListener('mouseout', function () {
-//     window.cancelAnimationFrame(raf);
-// });
+resetBtn.addEventListener('click', function () {
+    resetGame();
+    focusedCanvas();
+})
