@@ -29,3 +29,4 @@ const startAnimation = function () {
 }
 
 startAnimation();
+
